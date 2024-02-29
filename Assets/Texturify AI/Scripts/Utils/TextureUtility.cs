@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using System.IO;
@@ -9,12 +10,13 @@ namespace Texturify
 {
     public static class TextureUtility
 {
-    public static IEnumerator GenerateTexture(string styleInput, int textureSize, System.Action<Texture2D> onGenerated, string apiKey, string organizationKey)
+    public static IEnumerator GenerateTexture(string styleInput, int textureSize, 
+        System.Action<Texture2D> onGenerated, string apiKey, string organizationKey)
     {
         if (string.IsNullOrEmpty(styleInput))
         {
             Debug.LogWarning("No style was entered, generating a texture with a random style...");
-        }
+        }   
 
         DallE dalle = new DallE(apiKey, organizationKey);
 
@@ -97,15 +99,35 @@ namespace Texturify
         }
     }
 
-    public static Texture2D LoadTexture(string path)
+    public static void LoadTexturesFromFolder(string folderPath,List<Texture2D> loadedTextures)
     {
-        if (!File.Exists(path))
+        loadedTextures.Clear();
+        
+        if (Directory.Exists(folderPath))
         {
-            Debug.LogError("Texture file not found: " + path);
-            return null;
-        }
+            string[] texturePaths = Directory.GetFiles(folderPath, "*.png", SearchOption.TopDirectoryOnly);
 
-        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            foreach (string texturePath in texturePaths)
+            {
+                Texture2D loadedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+
+                if (loadedTexture != null)
+                {
+                    loadedTextures.Add(loadedTexture);
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Folder not found at path: " + folderPath);
+        }
+    }
+        
+    public static void DeleteTextureFile(Texture2D texture)
+    {
+        string path = AssetDatabase.GetAssetPath(texture);
+        AssetDatabase.DeleteAsset(path);
+        Debug.Log("Deleted texture asset: " + path);
     }
 }
 }
